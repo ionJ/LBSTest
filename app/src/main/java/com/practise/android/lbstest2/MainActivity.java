@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,6 +21,7 @@ import com.baidu.location.LocationClientOption;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +30,19 @@ public class MainActivity extends AppCompatActivity {
     public LocationClient mLocationClient;
 
     private TextView positionText;
+
+    public static final int UPDATE_TEXT = 1;
+
+    private Handler handler = new Handler() {
+
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case UPDATE_TEXT:
+                    StringBuilder address = (StringBuilder) msg.obj;
+                    positionText.setText(address);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy: start");
         mLocationClient.stop();
 
     }
@@ -112,8 +128,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     public class MyLocationListener implements BDLocationListener {
 
+        int i = 1;
 
         @Override
         public void onReceiveLocation(BDLocation location) {
@@ -139,8 +157,11 @@ public class MainActivity extends AppCompatActivity {
                 currentPosition.append("网络");
             }
             // positionText.setText(currentPosition);
-            Toast.makeText(MainActivity.this, currentPosition, Toast.LENGTH_LONG).show();
-
+            // Toast.makeText(MainActivity.this, currentPosition, Toast.LENGTH_LONG).show();
+            Message message = new Message();
+            message.what = UPDATE_TEXT;
+            message.obj = currentPosition;
+            handler.sendMessage(message);
         }
 
         @Override
