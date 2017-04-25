@@ -19,7 +19,11 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.MapStatusUpdate;
+import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
 
     private MapView mapView;
 
+    private BaiduMap baiduMap;
+
+    private boolean isFirstLocate = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         positionText = (TextView) findViewById(R.id.position_text_view);
         mapView = (MapView) findViewById(R.id.bmapView);
+        baiduMap = mapView.getMap();
 
         // 创建一个 List 集合，依次判断三个权限有没有被授权，如果没被授权就添加到 List 集合中
         // 最后将 List 转换成数组，再调用 ActivityCompat.requestPermissions() 方法一次性申请
@@ -74,7 +83,17 @@ public class MainActivity extends AppCompatActivity {
             requestLocation();
         }
 
+    }
 
+    private void navigateTo(BDLocation location) {
+        if (isFirstLocate) {
+            LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
+            MapStatusUpdate update = MapStatusUpdateFactory.newLatLng(ll);
+            baiduMap.animateMapStatus(update);
+            update = MapStatusUpdateFactory.zoomTo(16f);
+            baiduMap.animateMapStatus(update);
+            isFirstLocate = false;
+        }
     }
 
     private Handler handler = new Handler() {
@@ -150,42 +169,17 @@ public class MainActivity extends AppCompatActivity {
 
     public class MyLocationListener implements BDLocationListener {
 
-        int i = 1;
-
-        @Override
-        public void onReceiveLocation(BDLocation location) {
-            StringBuilder currentPosition = new StringBuilder();
-            currentPosition.append("纬度：").append(location.getLatitude()).
-                    append("\n");
-            currentPosition.append("经线：").append(location.getLongitude()).
-                    append("\n");
-            currentPosition.append("国家：").append(location.getCountry()).
-                    append("\n");
-            currentPosition.append("省：").append(location.getProvince()).
-                    append("\n");
-            currentPosition.append("市：").append(location.getCity()).
-                    append("\n");
-            currentPosition.append("区：").append(location.getDistrict()).
-                    append("\n");
-            currentPosition.append("街道：").append(location.getStreet()).
-                    append("\n");
-            currentPosition.append("定位方式：");
-            if (location.getLocType() == BDLocation.TypeGpsLocation) {
-                currentPosition.append("GPS");
-            } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
-                currentPosition.append("网络");
-            }
-            // positionText.setText(currentPosition);
-            // Toast.makeText(MainActivity.this, currentPosition, Toast.LENGTH_LONG).show();
-            Message message = new Message();
-            message.what = UPDATE_TEXT;
-            message.obj = currentPosition;
-            handler.sendMessage(message);
-        }
-
         @Override
         public void onConnectHotSpotMessage(String s, int i) {
 
+        }
+
+        @Override
+        public void onReceiveLocation(BDLocation location) {
+            if (location.getLocType() == BDLocation.TypeGpsLocation
+                    || location.getLocType() == BDLocation.TypeNetWorkLocation) {
+                navigateTo(location);
+            }
         }
     }
 
