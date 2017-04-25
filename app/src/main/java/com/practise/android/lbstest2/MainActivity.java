@@ -2,15 +2,15 @@ package com.practise.android.lbstest2;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.location.Location;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
+
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,14 +18,15 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.MapView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
 
     public LocationClient mLocationClient;
 
@@ -33,16 +34,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int UPDATE_TEXT = 1;
 
-    private Handler handler = new Handler() {
+    private MapView mapView;
 
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case UPDATE_TEXT:
-                    StringBuilder address = (StringBuilder) msg.obj;
-                    positionText.setText(address);
-            }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +47,11 @@ public class MainActivity extends AppCompatActivity {
         // 当获取到未知信息时，就会回调这个定位监听器
         mLocationClient.registerLocationListener(new MyLocationListener());
         // 初始化操作：接收一个全局的Context参数（必需在setContentView()之前调用）
+        SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         positionText = (TextView) findViewById(R.id.position_text_view);
+        mapView = (MapView) findViewById(R.id.bmapView);
+
         // 创建一个 List 集合，依次判断三个权限有没有被授权，如果没被授权就添加到 List 集合中
         // 最后将 List 转换成数组，再调用 ActivityCompat.requestPermissions() 方法一次性申请
         List<String> permissionList = new ArrayList<>();
@@ -81,6 +77,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private Handler handler = new Handler() {
+
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case UPDATE_TEXT:
+                    StringBuilder address = (StringBuilder) msg.obj;
+                    positionText.setText(address);
+            }
+        }
+    };
 
     // 调用 LocationClint 的 start() 方法开始定位，
     // 定位结果会回调到之前注册的监听器 MyLocationListener 中
@@ -98,9 +104,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mapView.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         mLocationClient.stop();
+        mapView.onDestroy();
 
     }
 
