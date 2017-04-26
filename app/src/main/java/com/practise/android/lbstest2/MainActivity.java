@@ -23,6 +23,7 @@ import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         positionText = (TextView) findViewById(R.id.position_text_view);
         mapView = (MapView) findViewById(R.id.bmapView);
         baiduMap = mapView.getMap();
+        baiduMap.setMyLocationEnabled(true);
 
         // 创建一个 List 集合，依次判断三个权限有没有被授权，如果没被授权就添加到 List 集合中
         // 最后将 List 转换成数组，再调用 ActivityCompat.requestPermissions() 方法一次性申请
@@ -94,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
             baiduMap.animateMapStatus(update);
             isFirstLocate = false;
         }
+        MyLocationData.Builder locationBuilder = new MyLocationData.Builder();
+        locationBuilder.latitude(location.getLatitude());
+        locationBuilder.longitude(location.getLongitude());
+        MyLocationData locationData = locationBuilder.build();
+        baiduMap.setMyLocationData(locationData);
     }
 
     private Handler handler = new Handler() {
@@ -139,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         mLocationClient.stop();
         mapView.onDestroy();
-
+        baiduMap.setMyLocationEnabled(false);
     }
 
 
